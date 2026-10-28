@@ -1595,7 +1595,22 @@ xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, i
 	r.width = width;
 	XftDrawSetClipRectangles(xw.draw, winx, winy, &r, 1);
 
-	/* Render the glyphs. */
+	/* Reinforce antialiased edges without changing glyph positions.
+	 * 0 disables the effect; 15-40 is a subtle range. */
+	if (fontdarken && fg != bg && !(base.mode & ATTR_BOLD)) {
+		XRenderColor tint = fg->color;
+		Color overlay;
+
+		tint.alpha = (unsigned int)tint.alpha *
+			(fontdarken > 100 ? 100 : fontdarken) / 100;
+		if (XftColorAllocValue(xw.dpy, xw.vis, xw.cmap,
+		                      &tint, &overlay)) {
+			XftDrawGlyphFontSpec(xw.draw, &overlay, specs, len);
+			XftColorFree(xw.dpy, xw.vis, xw.cmap, &overlay);
+		}
+	}
+
+	/* Render the glyphs normally on top. */
 	XftDrawGlyphFontSpec(xw.draw, fg, specs, len);
 
 	/* Render underline and strikethrough. */

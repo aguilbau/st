@@ -1,0 +1,50 @@
+--- a/config.def.h
++++ b/config.def.h
+@@ -28,6 +28,9 @@
+ /* Kerning / character bounding-box multipliers */
+ static float cwscale = 1.0;
+ static float chscale = 1.0;
++
++/* Extra contrast for antialiased glyphs (0 = off, 30 = subtle). */
++static const unsigned int fontdarken = 30;
+ 
+ /*
+  * word delimiter string
+--- a/config.h
++++ b/config.h
+@@ -28,6 +28,9 @@
+ /* Kerning / character bounding-box multipliers */
+ static float cwscale = 1.0;
+ static float chscale = 1.0;
++
++/* Extra contrast for antialiased glyphs (0 = off, 30 = subtle). */
++static const unsigned int fontdarken = 30;
+ 
+ /*
+  * word delimiter string
+--- a/x.c
++++ b/x.c
+@@ -1535,7 +1535,22 @@
+ 	r.width = width;
+ 	XftDrawSetClipRectangles(xw.draw, winx, winy, &r, 1);
+ 
+-	/* Render the glyphs. */
++	/* Reinforce antialiased edges without changing glyph positions.
++	 * 0 disables the effect; 15-40 is a subtle range. */
++	if (fontdarken && fg != bg && !(base.mode & ATTR_BOLD)) {
++		XRenderColor tint = fg->color;
++		Color overlay;
++
++		tint.alpha = (unsigned int)tint.alpha *
++			(fontdarken > 100 ? 100 : fontdarken) / 100;
++		if (XftColorAllocValue(xw.dpy, xw.vis, xw.cmap,
++		                      &tint, &overlay)) {
++			XftDrawGlyphFontSpec(xw.draw, &overlay, specs, len);
++			XftColorFree(xw.dpy, xw.vis, xw.cmap, &overlay);
++		}
++	}
++
++	/* Render the glyphs normally on top. */
+ 	XftDrawGlyphFontSpec(xw.draw, fg, specs, len);
+ 
+ 	/* Render underline and strikethrough. */

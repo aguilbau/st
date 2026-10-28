@@ -29,6 +29,9 @@ char *vtiden = "\033[?6c";
 static float cwscale = 1.0;
 static float chscale = 1.0;
 
+/* Extra contrast for antialiased glyphs (0 = off, 30 = subtle). */
+static const unsigned int fontdarken = 30;
+
 /*
  * word delimiter string
  *
@@ -55,17 +58,6 @@ int allowwindowops = 0;
  */
 static double minlatency = 2;
 static double maxlatency = 33;
-
-/*
- * blinking timeout (set to 0 to disable blinking) for the terminal blinking
- * attribute.
- */
-static unsigned int blinktimeout = 500;
-
-/*
- * thickness of underline and bar cursors
- */
-static unsigned int cursorthickness = 2;
 
 /*
  * bell volume. It must be a value between -100 and 100. Use 0 for disabling
@@ -159,8 +151,20 @@ unsigned int bg = 0, bgUnfocused = 0;
  * 7: Blinking st cursor
  * 8: Steady st cursor
  */
-static unsigned int cursorstyle = 1;
+static unsigned int cursorstyle = 5;
 static Rune stcursor = 0x2603;
+
+/*
+ * thickness of underline and bar cursors
+ */
+static unsigned int cursorthickness = 2;
+
+/*
+ * blinking timeout (set to 0 to disable blinking) for the terminal blinking
+ * attribute.
+ */
+static unsigned int blinktimeout = 500;
+
 
 /*
  * Default columns and rows numbers
