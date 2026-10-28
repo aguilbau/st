@@ -1,0 +1,22 @@
+# Compiled binary
+/st
+
+# Object files
+*.o
+
+# Patch backups and rejects
+*.orig
+*.rej
+
+# Editor temporary files (Vim)
+*.swp
+*.swo
+*~
+*.un~
+
+# Debugging / core dumps
+core
+core.*
+
+# Build archives
+*.tar.gz
