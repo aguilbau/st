@@ -1,44 +1,33 @@
-From feec0e2239d81373bd2ffcc28bdcf331328391f6 Mon Sep 17 00:00:00 2001
-From: Steven Ward <planet36@gmail.com>
-Date: Sat, 19 Aug 2023 08:05:36 -0500
-Subject: [PATCH] Add different cursor styles
-
----
- config.def.h | 19 +++++++++++++------
- x.c          | 47 +++++++++++++++++++++++++++++++++++------------
- 2 files changed, 48 insertions(+), 18 deletions(-)
-
-diff --git a/config.def.h b/config.def.h
-index 91ab8ca..b33a2ac 100644
 --- a/config.def.h
 +++ b/config.def.h
-@@ -137,11 +137,18 @@
+@@ -60,7 +60,7 @@
+  * blinking timeout (set to 0 to disable blinking) for the terminal blinking
+  * attribute.
+  */
+-static unsigned int blinktimeout = 800;
++static unsigned int blinktimeout = 500;
+ 
  /*
+  * thickness of underline and bar cursors
+@@ -138,14 +138,10 @@
+ float alpha = 0.7, alphaUnfocused = 0.7;
+ unsigned int bg = 0, bgUnfocused = 0;
+ 
+-/*
 - * Default shape of cursor
 - * 2: Block ("█")
 - * 4: Underline ("_")
 - * 6: Bar ("|")
 - * 7: Snowman ("☃")
-+ * https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q.1D81
-+ * Default style of cursor
-+ * 0: blinking block
-+ * 1: blinking block (default)
-+ * 2: steady block ("█")
-+ * 3: blinking underline
-+ * 4: steady underline ("_")
-+ * 5: blinking bar
-+ * 6: steady bar ("|")
-+ * 7: blinking st cursor
-+ * 8: steady st cursor
-  */
+- */
 -static unsigned int cursorshape = 2;
-+static unsigned int cursorstyle = 1;
-+static Rune stcursor = 0x2603; /* snowman ("☃") */
++/* Cursor style: 1 blinking block, 2 steady block, 5 blinking bar,
++ * 6 steady bar. */
++static unsigned int cursorstyle = 5;
++static Rune stcursor = 0x2603;
  
  /*
   * Default columns and rows numbers
-diff --git a/x.c b/x.c
-index aa09997..b33a963 100644
 --- a/x.c
 +++ b/x.c
 @@ -258,6 +258,7 @@
@@ -46,10 +35,10 @@ index aa09997..b33a963 100644
  static int selectingdrag; /* active terminal selection by left button */
  static int focused = 0;
 +static int cursorblinks = 0;
-
+ 
  void
  clipcopy(const Arg *dummy)
-@@ -1558,29 +1559,44 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
+@@ -1664,28 +1665,43 @@
  	/* draw the new one */
  	if (IS_SET(MODE_FOCUSED)) {
  		switch (win.cursor) {
@@ -91,7 +80,7 @@ index aa09997..b33a963 100644
  					borderpx + cx * win.cw,
  					borderpx + cy * win.ch,
  					cursorthickness, win.ch);
- 			break;
++			break;
 +		case 7: /* blinking st cursor */
 +			if (IS_SET(MODE_BLINK))
 +				break;
@@ -99,11 +88,10 @@ index aa09997..b33a963 100644
 +		case 8: /* steady st cursor */
 +			g.u = stcursor;
 +			xdrawglyph(g, cx, cy);
-+			break;
+ 			break;
  		}
  	} else {
- 		XftDrawRect(xw.draw, &drawcol,
-@@ -1737,9 +1753,12 @@ xsetmode(int set, unsigned int flags)
+@@ -1849,9 +1865,12 @@
  int
  xsetcursor(int cursor)
  {
@@ -117,7 +105,7 @@ index aa09997..b33a963 100644
  	return 0;
  }
  
-@@ -1986,6 +2005,10 @@ run(void)
+@@ -2109,6 +2128,10 @@
  		if (FD_ISSET(ttyfd, &rfd) || xev) {
  			if (!drawing) {
  				trigger = now;
@@ -128,7 +116,7 @@ index aa09997..b33a963 100644
  				drawing = 1;
  			}
  			timeout = (maxlatency - TIMEDIFF(now, trigger)) \
-@@ -1996,7 +2019,7 @@ run(void)
+@@ -2119,7 +2142,7 @@
  
  		/* idle detected or maxlatency exhausted -> draw */
  		timeout = -1;
@@ -137,7 +125,7 @@ index aa09997..b33a963 100644
  			timeout = blinktimeout - TIMEDIFF(now, lastblink);
  			if (timeout <= 0) {
  				if (-timeout > blinktimeout) /* start visible */
-@@ -2032,7 +2055,7 @@ main(int argc, char *argv[])
+@@ -2165,7 +2188,7 @@
  {
  	xw.l = xw.t = 0;
  	xw.isfixed = False;
@@ -146,6 +134,3 @@ index aa09997..b33a963 100644
  
  	ARGBEGIN {
  	case 'a':
--- 
-2.41.0
-

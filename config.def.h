@@ -60,6 +60,17 @@ static double minlatency = 2;
 static double maxlatency = 33;
 
 /*
+ * blinking timeout (set to 0 to disable blinking) for the terminal blinking
+ * attribute.
+ */
+static unsigned int blinktimeout = 500;
+
+/*
+ * thickness of underline and bar cursors
+ */
+static unsigned int cursorthickness = 2;
+
+/*
  * bell volume. It must be a value between -100 and 100. Use 0 for disabling
  * it
  */
@@ -112,11 +123,9 @@ static const char *colorname[] = {
 	/* more colors can be added after 255 to use with DefaultXX */
 	"#cccccc",
 	"#555555",
-	"gray90", /* default foreground colour */
-	"black", /* default background colour */
-	"gray90",
-	"black",
-	"#cfcfcf",
+	"gray90", /* index 258: default foreground */
+	"black",  /* index 259: default background */
+	"#cfcfcf", /* index 260: selection background */
 };
 
 
@@ -129,42 +138,19 @@ unsigned int defaultbg = 259;
 unsigned int defaultcs = 256;
 static unsigned int defaultrcs = 257;
 
+/* Selection colors. */
 unsigned int selectionfg = 0;
 unsigned int selectionbg = 260;
 static int ignoreselfg = 0;
 
-/* Background opacity */
+/* Opacity of focused and unfocused windows. */
 float alpha = 0.7, alphaUnfocused = 0.7;
-
-/* Background colors */
 unsigned int bg = 0, bgUnfocused = 0;
 
-/*
- * Default style of cursor
- * 0: Blinking block
- * 1: Blinking block (default)
- * 2: Steady block
- * 3: Blinking underline
- * 4: Steady underline
- * 5: Blinking bar
- * 6: Steady bar
- * 7: Blinking st cursor
- * 8: Steady st cursor
- */
+/* Cursor style: 1 blinking block, 2 steady block, 5 blinking bar,
+ * 6 steady bar. */
 static unsigned int cursorstyle = 5;
 static Rune stcursor = 0x2603;
-
-/*
- * thickness of underline and bar cursors
- */
-static unsigned int cursorthickness = 2;
-
-/*
- * blinking timeout (set to 0 to disable blinking) for the terminal blinking
- * attribute.
- */
-static unsigned int blinktimeout = 500;
-
 
 /*
  * Default columns and rows numbers
@@ -496,10 +482,8 @@ static char ascii_printable[] =
 	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
 
-/*
- * The amount of lines scrollback can hold before it wraps around.
- */
-unsigned int scrollback_lines = 10000;
-
 /* Lines per mouse-wheel event and selection auto-scroll tick. */
 static int scrollstep = 6;
+
+/* Scrollback history capacity. */
+unsigned int scrollback_lines = 10000;

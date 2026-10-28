@@ -416,17 +416,20 @@ sb_resize(int col)
 		}
 		logical_len += term.col;
 		/* If the line was wrapped, continue accumulating before reflowing. */
-		if (is_wrapped) {
+		if (is_wrapped && i + 1 < sb.len)
 			continue;
-		}
-		/* Trim trailing spaces from the fully unwrapped line. */
-		while (logical_len > 0) {
-			g = &logical[logical_len - 1];
-			if (g->u == ' ' && g->bg == defaultbg
-					&& (g->mode & ATTR_BOLD) == 0) {
-				logical_len--;
-			} else {
-				break;
+		/* The final history row can wrap into the live screen.  Flush
+		 * it rather than silently dropping the pending logical line. */
+		if (!is_wrapped) {
+			/* Trim trailing spaces from the fully unwrapped line. */
+			while (logical_len > 0) {
+				g = &logical[logical_len - 1];
+				if (g->u == ' ' && g->bg == defaultbg
+						&& (g->mode & ATTR_BOLD) == 0) {
+					logical_len--;
+				} else {
+					break;
+				}
 			}
 		}
 		if (logical_len == 0)
@@ -443,17 +446,30 @@ sb_resize(int col)
 				nl[j].u = ' ';
 			}
 
-			copy_width = logical_len - cursor;
-			if (copy_width > col)
-				copy_width = col;
-
-			memcpy(nl, logical + cursor, copy_width * sizeof(Glyph));
+			copy_width = MIN(logical_len - cursor, col);
+			/* A wide glyph and its WDUMMY must stay on the same row. */
+			if (cursor + copy_width < logical_len &&
+			    (logical[cursor + copy_width - 1].mode & ATTR_WIDE) &&
+			    (logical[cursor + copy_width].mode & ATTR_WDUMMY)) {
+				if (col == 1) {
+					/* A two-cell glyph cannot fit in one column. */
+					nl[0] = logical[cursor];
+					nl[0].u = UTF_INVALID;
+					nl[0].mode &= ~(ATTR_WIDE | ATTR_WDUMMY);
+					cursor += 2;
+					copy_width = 0;
+				} else {
+					copy_width--;
+				}
+			}
+			if (copy_width > 0)
+				memcpy(nl, logical + cursor, copy_width * sizeof(Glyph));
 
 			for (j = 0; j < copy_width; j++) {
 				nl[j].mode &= ~ATTR_WRAP;
 			}
 
-			if (cursor + copy_width < logical_len) {
+			if (cursor + copy_width < logical_len || is_wrapped) {
 				nl[col - 1].mode |= ATTR_WRAP;
 			} else {
 				nl[col - 1].mode &= ~ATTR_WRAP;
@@ -470,7 +486,8 @@ sb_resize(int col)
 				new_head = (new_head + 1) % sb.cap;
 				new_base++;
 			}
-			current_width = (cursor + copy_width < logical_len) ? col : copy_width;
+			current_width = (cursor + copy_width < logical_len) ? col :
+			                (copy_width ? copy_width : 1);
 			if (current_width > new_max_width)
 				new_max_width = current_width;
 			cursor += copy_width;
@@ -2699,9 +2716,12 @@ tdeftran(char ascii)
 static void
 kscroll(const Arg *arg)
 {
+	int old_offset = sb.view_offset;
+
 	sb.view_offset += arg->i;
 	LIMIT(sb.view_offset, 0, sb.len);
-	redraw();
+	if (sb.view_offset != old_offset)
+		redraw();
 }
 
 void

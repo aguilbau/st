@@ -1,17 +1,16 @@
 --- a/config.def.h
 +++ b/config.def.h
-@@ -28,6 +28,9 @@
- /* Kerning / character bounding-box multipliers */
- static float cwscale = 1.0;
- static float chscale = 1.0;
-+
-+/* Extra contrast for antialiased glyphs (0 = off, 30 = subtle). */
-+static const unsigned int fontdarken = 30;
+@@ -5,8 +5,8 @@
+  *
+  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
+  */
+-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
+-static int borderpx = 2;
++static char *font = "DejaVu Sans Mono:size=13:antialias=true:autohint=true";
++static int borderpx = 0;
  
  /*
-  * word delimiter string
---- a/config.h
-+++ b/config.h
+  * What program is execed by st depends of these precedence rules:
 @@ -28,6 +28,9 @@
  /* Kerning / character bounding-box multipliers */
  static float cwscale = 1.0;
@@ -24,7 +23,7 @@
   * word delimiter string
 --- a/x.c
 +++ b/x.c
-@@ -1535,7 +1535,22 @@
+@@ -1601,7 +1601,22 @@
  	r.width = width;
  	XftDrawSetClipRectangles(xw.draw, winx, winy, &r, 1);
  
@@ -48,3 +47,23 @@
  	XftDrawGlyphFontSpec(xw.draw, fg, specs, len);
  
  	/* Render underline and strikethrough. */
+--- a/README
++++ b/README
+@@ -29,6 +29,17 @@
+ See the man page for additional details.
+ 
+ 
++Patches
++-------
++This build includes the following patches (in application order):
++
++    scrollback-extended-fixed.diff      scrollback and reflow
++    autoscroll-extended-0.9.3.diff      selection auto-scroll
++    alpha-focus-0.9.3-fixed.diff        background transparency
++    blinking-cursor-fixed.diff          blinking cursor
++    selectioncolors.diff                selection colors
++    fontdarken-0.9.3.diff               font darkening
++
+ Credits
+ -------
+ Based on Aurélien APTEL <aurelien dot aptel at gmail dot com> bt source code.

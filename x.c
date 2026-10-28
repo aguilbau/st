@@ -514,7 +514,8 @@ bpress(XEvent *e)
 		return;
 
 	if (btn == Button1) {
-		selectingdrag = 1;
+		/* The auto-scroll timer starts only after mouse movement. */
+		selectingdrag = 0;
 		/* shift+click extends the current selection */
 		if ((e->xbutton.state & ShiftMask) && !IS_SET(MODE_MOUSE) &&
 		    selextendto(evcol(e), evrow(e), mouseseltype(e)))
@@ -760,6 +761,8 @@ bmotion(XEvent *e)
 		return;
 	}
 
+	if (e->xmotion.state & Button1Mask)
+		selectingdrag = 1;
 	mousesel(e, 0);
 }
 
@@ -875,8 +878,11 @@ void
 xloadalpha(void)
 {
 	xloadcolor(focused ?bg :bgUnfocused, NULL, &dc.col[defaultbg]);
-	float const usedAlpha = focused ? alpha : alphaUnfocused;
-	if (opt_alpha) alpha = strtof(opt_alpha, NULL);
+	float usedAlpha;
+
+	if (opt_alpha)
+		alpha = strtof(opt_alpha, NULL);
+	usedAlpha = focused ? alpha : alphaUnfocused;
 	dc.col[defaultbg].color.alpha = (unsigned short)(0xffff * usedAlpha);
 	dc.col[defaultbg].pixel &= 0x00FFFFFF;
 	dc.col[defaultbg].pixel |= (unsigned char)(0xff * usedAlpha) << 24;

@@ -1,35 +1,17 @@
 --- a/config.def.h
 +++ b/config.def.h
-@@ -472,8 +472,11 @@
- 	" !\"#$%&'()*+,-./0123456789:;<=>?"
+@@ -473,5 +473,8 @@
  	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
  	"`abcdefghijklmnopqrstuvwxyz{|}~";
  
 +/* Lines per mouse-wheel event and selection auto-scroll tick. */
-+static int scrollstep = 4;
++static int scrollstep = 6;
 +
- /*
-  * The amount of lines scrollback can hold before it wraps around.
-  */
- unsigned int scrollback_lines = 10000;
---- a/config.h
-+++ b/config.h
-@@ -472,8 +472,11 @@
- 	" !\"#$%&'()*+,-./0123456789:;<=>?"
- 	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
- 	"`abcdefghijklmnopqrstuvwxyz{|}~";
- 
-+/* Lines per mouse-wheel event and selection auto-scroll tick. */
-+static int scrollstep = 4;
-+
- /*
-  * The amount of lines scrollback can hold before it wraps around.
-  */
+ /* Scrollback history capacity. */
  unsigned int scrollback_lines = 10000;
 --- a/x.c
 +++ b/x.c
-@@ -255,8 +255,9 @@
- static char *opt_name  = NULL;
+@@ -254,6 +254,7 @@
  static char *opt_title = NULL;
  
  static uint buttons; /* bit field of pressed buttons */
@@ -37,30 +19,25 @@
  
  void
  clipcopy(const Arg *dummy)
- {
-@@ -485,9 +486,9 @@
- 			mousereport(e);
+@@ -484,7 +485,7 @@
  			return;
  		}
  		if (!tisaltscreen()) {
--			a.i = 4;
+-			a.i = 1;
 +			a.i = scrollstep;
  			if (btn == Button4) {
  				kscrollup(&a);
  			} else {
- 				kscrolldown(&a);
-@@ -510,8 +511,9 @@
- 	if (mouseaction(e, 0))
+@@ -509,6 +510,8 @@
  		return;
  
  	if (btn == Button1) {
-+		selectingdrag = 1;
++		/* The auto-scroll timer starts only after mouse movement. */
++		selectingdrag = 0;
  		/* shift+click extends the current selection */
  		if ((e->xbutton.state & ShiftMask) && !IS_SET(MODE_MOUSE) &&
  		    selextendto(evcol(e), evrow(e), mouseseltype(e)))
- 			return;
-@@ -730,8 +732,11 @@
- brelease(XEvent *e)
+@@ -729,6 +732,9 @@
  {
  	int btn = e->xbutton.button;
  
@@ -70,11 +47,12 @@
  	if (1 <= btn && btn <= 11)
  		buttons &= ~(1 << (btn-1));
  
- 	if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forcemousemod)) {
-@@ -753,8 +758,50 @@
+@@ -751,7 +757,51 @@
  		return;
  	}
  
++	if (e->xmotion.state & Button1Mask)
++		selectingdrag = 1;
  	mousesel(e, 0);
 +}
 +
@@ -121,9 +99,7 @@
  }
  
  void
- cresize(int width, int height)
-@@ -2000,8 +2047,9 @@
- 	int w = win.w, h = win.h;
+@@ -1958,6 +2008,7 @@
  	fd_set rfd;
  	int xfd = XConnectionNumber(xw.dpy), ttyfd, xev, drawing;
  	struct timespec seltv, *tv, now, lastblink, trigger;
@@ -131,9 +107,7 @@
  	double timeout;
  
  	/* Waiting for window mapping */
- 	do {
-@@ -2091,8 +2139,18 @@
- 				tsetdirtattr(ATTR_BLINK);
+@@ -2045,6 +2096,16 @@
  				lastblink = now;
  				timeout = blinktimeout;
  			}
@@ -150,4 +124,3 @@
  		}
  
  		draw();
- 		XFlush(xw.dpy);
