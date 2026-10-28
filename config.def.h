@@ -473,6 +473,9 @@ static char ascii_printable[] =
 	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
 
+/* Lines per mouse-wheel event and selection auto-scroll tick. */
+static int scrollstep = 4;
+
 /*
  * The amount of lines scrollback can hold before it wraps around.
  */

@@ -254,6 +254,7 @@ static char *opt_name  = NULL;
 static char *opt_title = NULL;
 
 static uint buttons; /* bit field of pressed buttons */
+static int selectingdrag; /* active terminal selection by left button */
 
 void
 clipcopy(const Arg *dummy)
@@ -484,7 +485,7 @@ bpress(XEvent *e)
 			return;
 		}
 		if (!tisaltscreen()) {
-			a.i = 4;
+			a.i = scrollstep;
 			if (btn == Button4) {
 				kscrollup(&a);
 			} else {
@@ -509,6 +510,7 @@ bpress(XEvent *e)
 		return;
 
 	if (btn == Button1) {
+		selectingdrag = 1;
 		/* shift+click extends the current selection */
 		if ((e->xbutton.state & ShiftMask) && !IS_SET(MODE_MOUSE) &&
 		    selextendto(evcol(e), evrow(e), mouseseltype(e)))
@@ -729,6 +731,9 @@ brelease(XEvent *e)
 {
 	int btn = e->xbutton.button;
 
+	if (btn == Button1)
+		selectingdrag = 0;
+
 	if (1 <= btn && btn <= 11)
 		buttons &= ~(1 << (btn-1));
 
@@ -752,6 +757,48 @@ bmotion(XEvent *e)
 	}
 
 	mousesel(e, 0);
+}
+
+/* Auto-scroll a selection when the mouse stays at the window edge. */
+#define AUTOSCROLL_INTERVAL 50 /* milliseconds */
+
+static void
+selectionautoscroll(void)
+{
+	Window root, child;
+	int rootx, rooty, x, y;
+	unsigned int mask;
+	Arg a = { .i = scrollstep };
+	XEvent ev = {0};
+
+	if (!selectingdrag || tisaltscreen())
+		return;
+	if (!XQueryPointer(xw.dpy, xw.win, &root, &child,
+	                   &rootx, &rooty, &x, &y, &mask))
+		return;
+	if (!(mask & Button1Mask)) {
+		selectingdrag = 0;
+		return;
+	}
+	if (IS_SET(MODE_MOUSE) && !(mask & forcemousemod))
+		return;
+
+	if (y < borderpx + win.ch) {
+		kscrollup(&a);
+		y = borderpx;
+	} else if (y >= win.h - borderpx - win.ch) {
+		kscrolldown(&a);
+		y = win.h - borderpx - 1;
+	} else {
+		return;
+	}
+
+	/* Extend the selection at its new position in the scrolled view. */
+	ev.type = MotionNotify;
+	ev.xbutton.x = x;
+	ev.xbutton.y = y;
+	ev.xbutton.state = mask;
+	mousesel(&ev, 0);
 }
 
 void
@@ -1958,6 +2005,7 @@ run(void)
 	fd_set rfd;
 	int xfd = XConnectionNumber(xw.dpy), ttyfd, xev, drawing;
 	struct timespec seltv, *tv, now, lastblink, trigger;
+	struct timespec lastautoscroll = {0};
 	double timeout;
 
 	/* Waiting for window mapping */
@@ -2045,6 +2093,16 @@ run(void)
 				lastblink = now;
 				timeout = blinktimeout;
 			}
+		}
+
+		if (selectingdrag && !tisaltscreen()) {
+			if (TIMEDIFF(now, lastautoscroll) >= AUTOSCROLL_INTERVAL) {
+				selectionautoscroll();
+				lastautoscroll = now;
+			}
+			/* Tick even if the pointer is perfectly still. */
+			if (timeout < 0 || timeout > AUTOSCROLL_INTERVAL)
+				timeout = AUTOSCROLL_INTERVAL;
 		}
 
 		draw();
