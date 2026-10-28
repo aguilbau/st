@@ -122,6 +122,9 @@ static const char *colorname[] = {
 	"#555555",
 	"gray90", /* default foreground colour */
 	"black", /* default background colour */
+	"gray90",
+	"black",
+	"#cfcfcf",
 };
 
 
@@ -133,6 +136,10 @@ unsigned int defaultfg = 258;
 unsigned int defaultbg = 259;
 unsigned int defaultcs = 256;
 static unsigned int defaultrcs = 257;
+
+unsigned int selectionfg = 0;
+unsigned int selectionbg = 260;
+static int ignoreselfg = 0;
 
 /* Background opacity */
 float alpha = 0.7, alphaUnfocused = 0.7;

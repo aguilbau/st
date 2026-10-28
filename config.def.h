@@ -60,7 +60,7 @@ static double maxlatency = 33;
  * blinking timeout (set to 0 to disable blinking) for the terminal blinking
  * attribute.
  */
-static unsigned int blinktimeout = 800;
+static unsigned int blinktimeout = 500;
 
 /*
  * thickness of underline and bar cursors
@@ -93,9 +93,6 @@ char *termname = "st-256color";
  */
 unsigned int tabspaces = 8;
 
-/* bg opacity */
-float alpha = 0.93, alphaUnfocused = 0.6;
-
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
 	/* 8 normal colors */
@@ -123,7 +120,11 @@ static const char *colorname[] = {
 	/* more colors can be added after 255 to use with DefaultXX */
 	"#cccccc",
 	"#555555",
+	"gray90", /* default foreground colour */
+	"black", /* default background colour */
+	"gray90",
 	"black",
+	"#cfcfcf",
 };
 
 
@@ -131,27 +132,35 @@ static const char *colorname[] = {
  * Default colors (colorname index)
  * foreground, background, cursor, reverse cursor
  */
-unsigned int defaultfg = 7;
-unsigned int defaultbg = 0;
+unsigned int defaultfg = 258;
+unsigned int defaultbg = 259;
 unsigned int defaultcs = 256;
 static unsigned int defaultrcs = 257;
-unsigned int bg = 0, bgUnfocused = 16;
+
+unsigned int selectionfg = 0;
+unsigned int selectionbg = 260;
+static int ignoreselfg = 0;
+
+/* Background opacity */
+float alpha = 0.7, alphaUnfocused = 0.7;
+
+/* Background colors */
+unsigned int bg = 0, bgUnfocused = 0;
 
 /*
- * https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q.1D81
  * Default style of cursor
- * 0: blinking block
- * 1: blinking block (default)
- * 2: steady block ("█")
- * 3: blinking underline
- * 4: steady underline ("_")
- * 5: blinking bar
- * 6: steady bar ("|")
- * 7: blinking st cursor
- * 8: steady st cursor
+ * 0: Blinking block
+ * 1: Blinking block (default)
+ * 2: Steady block
+ * 3: Blinking underline
+ * 4: Steady underline
+ * 5: Blinking bar
+ * 6: Steady bar
+ * 7: Blinking st cursor
+ * 8: Steady st cursor
  */
 static unsigned int cursorstyle = 1;
-static Rune stcursor = 0x2603; /* snowman ("☃") */
+static Rune stcursor = 0x2603;
 
 /*
  * Default columns and rows numbers
@@ -484,7 +493,7 @@ static char ascii_printable[] =
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
 
 /* Lines per mouse-wheel event and selection auto-scroll tick. */
-static int scrollstep = 4;
+static int scrollstep = 6;
 
 /*
  * The amount of lines scrollback can hold before it wraps around.
