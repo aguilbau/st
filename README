@@ -28,6 +28,18 @@ the st terminfo entry with the following command:
 
 See the man page for additional details.
 
+
+Patches
+-------
+This build includes the following patches (in application order):
+
+    scrollback-extended-fixed.diff      scrollback and reflow
+    autoscroll-extended-0.9.3.diff      selection auto-scroll
+    alpha-focus-0.9.3-fixed.diff        background transparency
+    blinking-cursor-fixed.diff          blinking cursor
+    selectioncolors.diff                selection colors
+    fontdarken-0.9.3.diff               font darkening
+
 Credits
 -------
 Based on Aurélien APTEL <aurelien dot aptel at gmail dot com> bt source code.
