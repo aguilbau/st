@@ -134,6 +134,12 @@ unsigned int defaultbg = 259;
 unsigned int defaultcs = 256;
 static unsigned int defaultrcs = 257;
 
+/* Background opacity */
+float alpha = 0.7, alphaUnfocused = 0.7;
+
+/* Background colors */
+unsigned int bg = 0, bgUnfocused = 0;
+
 /*
  * Default shape of cursor
  * 2: Block ("█")
@@ -474,7 +480,7 @@ static char ascii_printable[] =
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
 
 /* Lines per mouse-wheel event and selection auto-scroll tick. */
-static int scrollstep = 4;
+static int scrollstep = 6;
 
 /*
  * The amount of lines scrollback can hold before it wraps around.
